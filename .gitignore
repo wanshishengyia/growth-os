@@ -4,3 +4,9 @@ __pycache__
 *.db
 .pytest_cache
 n8n_data
+
+# Data
+data/
+*.db-shm
+*.db-wal
+.venv/

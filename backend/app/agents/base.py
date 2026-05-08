@@ -55,7 +55,7 @@ class BaseAgent(ABC):
                 model=result['model'],
                 input_tokens=result['input_tokens'],
                 output_tokens=result['output_tokens'],
-                cost_usd=self._estimate_cost(result),
+                cost_usd=self.llm._estimate_cost(result),
                 latency_ms=latency_ms,
                 status='success'
             )
@@ -76,8 +76,3 @@ class BaseAgent(ABC):
                 error_message=str(e)
             )
             raise
-
-    def _estimate_cost(self, result: dict) -> float:
-        input_cost = result['input_tokens'] * 3.0 / 1_000_000
-        output_cost = result['output_tokens'] * 15.0 / 1_000_000
-        return round(input_cost + output_cost, 6)
