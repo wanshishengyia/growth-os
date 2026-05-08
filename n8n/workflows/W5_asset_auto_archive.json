@@ -1,0 +1,183 @@
+{
+  "name": "W5 Asset Auto Archive",
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Content Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "asset-ingest",
+        "responseMode": "onReceived",
+        "responseData": "allEntries"
+      }
+    },
+    {
+      "id": "http-classify",
+      "name": "Classify Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/agents/asset_classifier",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ $json.body.content }}"
+            },
+            {
+              "name": "source",
+              "value": "={{ $json.body.source }}"
+            },
+            {
+              "name": "url",
+              "value": "={{ $json.body.url }}"
+            },
+            {
+              "name": "title",
+              "value": "={{ $json.body.title }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "if-is-asset",
+      "name": "Is Asset?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-is-asset",
+              "leftValue": "={{ $json.is_asset }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "http-save-asset",
+      "name": "Save Asset",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/assets",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $json.title }}"
+            },
+            {
+              "name": "content",
+              "value": "={{ $json.content }}"
+            },
+            {
+              "name": "category",
+              "value": "={{ $json.category }}"
+            },
+            {
+              "name": "tags",
+              "value": "={{ $json.tags }}"
+            },
+            {
+              "name": "source",
+              "value": "={{ $json.source }}"
+            },
+            {
+              "name": "url",
+              "value": "={{ $json.url }}"
+            },
+            {
+              "name": "summary",
+              "value": "={{ $json.summary }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "discard-non-asset",
+      "name": "Discard Non-Asset",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [850, 400],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Content Webhook": {
+      "main": [
+        [
+          {
+            "node": "Classify Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Content": {
+      "main": [
+        [
+          {
+            "node": "Is Asset?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Asset?": {
+      "main": [
+        [
+          {
+            "node": "Save Asset",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Discard Non-Asset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "timezone": "Asia/Shanghai"
+  },
+  "tags": ["growth-os", "assets", "auto-archive"]
+}

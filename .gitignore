@@ -1,0 +1,6 @@
+.env
+__pycache__
+.venv
+*.db
+.pytest_cache
+n8n_data

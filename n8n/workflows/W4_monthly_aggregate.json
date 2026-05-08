@@ -1,0 +1,146 @@
+{
+  "name": "W4 Monthly Aggregate",
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Last Day of Month",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "custom",
+              "cronExpression": "0 20 28-31 * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "if-last-day",
+      "name": "Is Last Day?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-last-day",
+              "leftValue": "={{ $now.plus(1, 'day').day }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "http-monthly",
+      "name": "Run Monthly Aggregate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/loop/monthly/run",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "trigger_source",
+              "value": "n8n_cron"
+            },
+            {
+              "name": "month",
+              "value": "={{ $now.format('yyyy-MM') }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 180000
+        }
+      }
+    },
+    {
+      "id": "telegram-monthly",
+      "name": "Send Monthly Report",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 200],
+      "parameters": {
+        "chatId": "={{ $credentials.telegramChatId }}",
+        "text": "=📊 *月度报告 - {{ $json.month }}*\n\n🎯 *目标完成率:* {{ $json.goal_completion_rate }}%\n📅 *打卡天数:* {{ $json.active_days }}/30\n😊 *平均情绪:* {{ $json.avg_mood }}/10\n📚 *资产新增:* {{ $json.new_assets }} 条\n💡 *AI 洞察:*\n{{ $json.ai_insights }}\n\n🏆 *本月成就:*\n{{ $json.achievements }}\n\n📈 *成长趋势:*\n{{ $json.growth_trend }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "skip-not-last",
+      "name": "Skip (Not Last Day)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [650, 400],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Last Day of Month": {
+      "main": [
+        [
+          {
+            "node": "Is Last Day?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Last Day?": {
+      "main": [
+        [
+          {
+            "node": "Run Monthly Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip (Not Last Day)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Monthly Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Send Monthly Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "timezone": "Asia/Shanghai"
+  },
+  "tags": ["growth-os", "monthly", "aggregate"]
+}

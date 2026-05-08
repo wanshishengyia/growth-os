@@ -1,0 +1,88 @@
+{
+  "name": "W3 Weekly Review",
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Sunday 20:00",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "custom",
+              "cronExpression": "0 20 * * 0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-weekly",
+      "name": "Run Weekly Review",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/loop/weekly/run",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "trigger_source",
+              "value": "n8n_cron"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "telegram-weekly",
+      "name": "Send Review Template",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "parameters": {
+        "chatId": "={{ $credentials.telegramChatId }}",
+        "text": "=📋 *Weekly Review - {{ $json.week }}*\n\n📈 *本周概览:*\n• 完成目标: {{ $json.goals_completed }}/{{ $json.goals_total }}\n• 连续打卡: {{ $json.streak }} 天\n• 情绪均值: {{ $json.avg_mood }}/10\n\n🏆 *本周亮点:*\n{{ $json.highlights }}\n\n⚠️ *需要改进:*\n{{ $json.improvements }}\n\n🎯 *下周计划:*\n{{ $json.next_week_plan }}\n\n---\n请回复此消息补充你的周报内容",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Sunday 20:00": {
+      "main": [
+        [
+          {
+            "node": "Run Weekly Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Weekly Review": {
+      "main": [
+        [
+          {
+            "node": "Send Review Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "timezone": "Asia/Shanghai"
+  },
+  "tags": ["growth-os", "weekly", "review"]
+}

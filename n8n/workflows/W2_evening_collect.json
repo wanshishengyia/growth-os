@@ -1,0 +1,155 @@
+{
+  "name": "W2 Evening Collect",
+  "nodes": [
+    {
+      "id": "telegram-trigger",
+      "name": "Receive Telegram Message",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "if-text-message",
+      "name": "Is Text Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "condition-2",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "/",
+              "operator": {
+                "type": "string",
+                "operation": "notStartsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "http-evening",
+      "name": "Submit Evening Entry",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/loop/daily/evening",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $json.message.date }}"
+            },
+            {
+              "name": "chat_id",
+              "value": "={{ $json.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "telegram-reply",
+      "name": "Send AI Analysis",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 200],
+      "parameters": {
+        "chatId": "={{ $('Receive Telegram Message').item.json.message.chat.id }}",
+        "text": "=🤖 *AI 分析结果*\n\n{{ $json.analysis }}\n\n📊 *情绪指数*: {{ $json.mood_score }}/10\n🔑 *关键词*: {{ $json.keywords }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "reply_to_message_id": "={{ $('Receive Telegram Message').item.json.message.message_id }}"
+        }
+      }
+    },
+    {
+      "id": "ignore-command",
+      "name": "Ignore Commands",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [650, 400],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Receive Telegram Message": {
+      "main": [
+        [
+          {
+            "node": "Is Text Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Text Message?": {
+      "main": [
+        [
+          {
+            "node": "Submit Evening Entry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ignore Commands",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit Evening Entry": {
+      "main": [
+        [
+          {
+            "node": "Send AI Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "timezone": "Asia/Shanghai"
+  },
+  "tags": ["growth-os", "daily", "evening"]
+}

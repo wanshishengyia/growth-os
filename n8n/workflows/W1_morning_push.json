@@ -1,0 +1,94 @@
+{
+  "name": "W1 Morning Push",
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Every Day 7:30",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "custom",
+              "cronExpression": "30 7 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-morning",
+      "name": "Get Morning Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "http://backend:8000/api/loop/daily/morning",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "telegram-morning",
+      "name": "Send Morning Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "parameters": {
+        "chatId": "={{ $credentials.telegramChatId }}",
+        "text": "=☀️ *早安！Growth OS 晨间推送*\n\n📅 日期: {{ $json.date }}\n\n📌 *今日重点:*\n{{ $json.focus }}\n\n🎯 *待办事项:*\n{{ $json.todos }}\n\n💪 *每日一句:*\n{{ $json.quote }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "error-handler",
+      "name": "Send Error Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [650, 500],
+      "parameters": {
+        "chatId": "={{ $credentials.telegramChatId }}",
+        "text": "=⚠️ *W1 晨间推送失败*\n\n错误: {{ $json.error.message }}\n时间: {{ $now.format('yyyy-MM-dd HH:mm:ss') }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every Day 7:30": {
+      "main": [
+        [
+          {
+            "node": "Get Morning Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Morning Data": {
+      "main": [
+        [
+          {
+            "node": "Send Morning Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "timezone": "Asia/Shanghai",
+    "errorWorkflow": ""
+  },
+  "tags": ["growth-os", "daily", "morning"]
+}

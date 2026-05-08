@@ -1,0 +1,7 @@
+templater
+obsidian-dataview
+obsidian-local-rest-api
+periodic-notes
+obsidian-tasks
+obsidian-git
+tag-wrangler
