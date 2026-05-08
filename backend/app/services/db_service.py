@@ -12,15 +12,15 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from app.models.ai_interaction import AIInteractionCreate
-from app.models.asset import AssetCreate
-from app.models.daily_log import DailyLogCreate
-from app.models.environment_rule import EnvironmentRuleCreate
-from app.models.goal import GoalCreate, GoalUpdate
-from app.models.insight import InsightCreate
-from app.models.review import ReviewCreate
-from app.models.responses import DashboardStats
-from app.services.supabase_client import get_client
+from backend.app.models.ai_interaction import AIInteractionCreate
+from backend.app.models.asset import AssetCreate
+from backend.app.models.daily_log import DailyLogCreate
+from backend.app.models.environment_rule import EnvironmentRuleCreate
+from backend.app.models.goal import GoalCreate, GoalUpdate
+from backend.app.models.insight import InsightCreate
+from backend.app.models.review import ReviewCreate
+from backend.app.models.responses import DashboardStats
+from backend.app.services.supabase_client import get_client
 
 
 def _serialize(data: dict) -> dict:

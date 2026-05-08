@@ -7,7 +7,7 @@ from typing import Optional
 
 from supabase import Client, create_client
 
-from app.config import settings
+from backend.app.config import settings
 
 logger = logging.getLogger(__name__)
 

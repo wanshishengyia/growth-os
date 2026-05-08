@@ -24,7 +24,7 @@ from telegram.ext import (
     filters,
 )
 
-from app.models.daily_log import DailyLogCreate
+from backend.app.models.daily_log import DailyLogCreate
 
 logger = logging.getLogger(__name__)
 
